@@ -27,6 +27,6 @@ def start_movement():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':  # True only for the second run in debug mode
-        setup_connection()
+    # if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':  # True only for the second run in debug mode
+    #     setup_connection()
     app.run(debug=True)
