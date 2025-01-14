@@ -3,11 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arduino Communication</title>
-<script src="{{ url_for('static', filename='renderer.js') }}"></script></head>
+    <title>Quake Table Control System </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='renderer.js') }}"></script>
+</head>
 <body>
-    <h1>Arduino Communication</h1>
+    <div class="card">
+        <label>
+        <input type="range"
+            min="0"
+            max="100"
+            value="50"
+            step="10"
+            class="slider">
+    </label>
+    </div>
     <button id="sendDataButton">Send Movement Data</button>
     <p id="response"></p>
+
 </body>
 </html>
