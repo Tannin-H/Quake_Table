@@ -1,7 +1,6 @@
 import os
 
-from flask import Flask, request, jsonify, render_template
-from arduino_link import ArduinoLink
+from flask import Flask, jsonify, render_template
 from main import send_movement_data, open_connection
 
 app = Flask(__name__)
