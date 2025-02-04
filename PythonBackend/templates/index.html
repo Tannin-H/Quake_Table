@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quake Table Control System </title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="{{ url_for('static', filename='renderer.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/renderer.js') }}" defer></script>
 </head>
 <body>
-    <div class="controls card">
+    <div class="controls-card">
         <h2>Manual Controls</h2>
         <label>
         <input type="range"
@@ -20,28 +21,30 @@
     </label>
     </div>
 
-    <div class="cosine card">
+    <div class="cosine-card">
         <h2>Cosine Waveform Generation</h2>
         <label>
-        <input type="range"
-            min="0"
-            max="100"
-            value="50"
-            step="10"
-            class="slider">
+        <input type="range" id="range" min="0" max="100" value="0">
+        <span class="value">50</span> <br>
+
     </label>
         <label for="grndSpeed">Peak Ground Speed(m/s)</label>
         <input type="text" id="grndSpeed"><br><br>
+
         <label for="grndAcceleration">Peak Ground Acceleration(m/s^2)</label>
         <input type="text" id="grndAcceleration"><br><br>
+
         <label for="numOfCycles">Number of Cycles</label>
         <input type="text" id="numOfCycles"><br><br>
+
         <input type="text" id="percentDamped" disabled>
         <label for="percentDamped">Percent Damped</label>
+
         <input type="checkbox" id="dampedCheckbox">
         <label for="dampedCheckbox">Damped</label>
     </div>
-    <button id="sendDataButton">Send Movement Data</button>
+    <canvas id="myChart"></canvas>
+    <button id="sendDataButton">Begin Simulation</button>
     <p id="response"></p>
 
 </body>
