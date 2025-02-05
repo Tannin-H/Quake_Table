@@ -13,3 +13,7 @@ def send_movement_data(controller_conn):
     # Establish connection and send data
     response = controller_conn.send(movement_data + '\n')  # Ensure newline to indicate end of message
     return response
+
+def init_table(controller_conn):
+    response = controller_conn.send("RESET\n")
+    return response

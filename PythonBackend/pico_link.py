@@ -43,7 +43,9 @@ class PicoLink:
                 # Read one byte at a time from the serial port
                 incoming = self.serial.read()
                 if incoming == b'\n':  # Indicates end of a message
-                    self.controllerQueue.put(message.decode('utf-8').strip().upper())
+                    decoded_message = message.decode('utf-8').strip().upper()
+                    print(f"Received from Pico: {decoded_message}")  # Print the received message
+                    self.controllerQueue.put(decoded_message)
                     message = b''  # Reset message after handling
                 elif incoming not in [b'', b'\r']:  # Append valid data to the message
                     message += incoming
