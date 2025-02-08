@@ -1,23 +1,124 @@
-.controls-card {
-    margin-top: 20px;
-    padding: 20px;
-    width: 500px;
-    background-color: #ffffff;
-    box-shadow: 0 0 4px 0 rgba(0,0,0,0.3);
-    transition: 0.3s;
-    border-radius: 5px;
+/* Define your constants (variables) */
+:root {
+    --primary-color: #f50; /* Orange color */
+    --secondary-color: #333; /* Dark gray */
+    --background-color: #f4f4f4; /* Light gray */
 }
 
+/* Responsive Design */
+@media screen and (max-width: 800px) {
+    .controls-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .controls-card,
+    .cosine-card {
+        width: 100%;
+    }
+
+    .graph-container {
+        width: 100%;
+        max-width: 600px;
+    }
+}
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background-color: var(--secondary-color);
+    color: white;
+    border-bottom: 3px solid var(--primary-color);
+}
+/* General Page Styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+}
+
+/* Main Container */
+.container {
+    display: flex;
+    flex-direction: column; /* Ensures the graph stays below */
+    align-items: center;
+    gap: 20px; /* Adds spacing */
+    margin: 20px;
+}
+
+/* Controls Container (Holds Both Cards Control Cards) */
+.controls-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* Spacing between the cards */
+    width: 100%;
+    max-width: 1100px; /* Prevents excessive stretching */
+}
+
+/* Individual Card Styling */
+.controls-card,
 .cosine-card {
-    margin-top: 20px;
+    flex: 1; /* Allows them to evenly share space */
     padding: 20px;
-    width: 500px;
     background-color: #ffffff;
     box-shadow: 0 0 4px 0 rgba(0,0,0,0.3);
     transition: 0.3s;
     border-radius: 5px;
+    min-width: 300px; /* Ensures they don’t shrink too much */
 }
 
+.graph-container {
+    width: 100%;
+    max-width: 800px;
+    background-color: #f9f9f9;
+    padding: 20px;
+    box-shadow: 0 0 4px 0 rgba(0,0,0,0.3);
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Canvas (Graph) */
+canvas {
+    width: 100%;
+    height: 400px;
+    max-width: 100%;
+}
+
+h1 {
+    margin: 0;
+}
+h3 {
+    margin: 0;
+    padding: 0;
+}
+p {
+    margin: 5px 0;
+    padding: 0;
+    font-size: 14px;
+}
+
+
+/* Button Styling */
+button {
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: #d14000;
+}
+
+/* Sliders Styling */
 input[type="range"] {
   /* removing default appearance */
   -webkit-appearance: none;
@@ -40,7 +141,7 @@ input[type="range"]::-webkit-slider-thumb {
   /* creating a custom design */
   height: 15px;
   width: 15px;
-  background-color: #f50;
+  background-color: var(--primary-color);
   border-radius: 50%;
   border: none;
 
@@ -51,13 +152,14 @@ input[type="range"]::-webkit-slider-thumb {
 input[type="range"]::-moz-range-thumb {
   height: 15px;
   width: 15px;
-  background-color: #f50;
+  background-color: var(--primary-color);
   border-radius: 50%;
   border: none;
 
   transition: .2s ease-in-out;
 }
 
+/* Hover, active & focus Thumb: webKit */
 input[type="range"]::-webkit-slider-thumb:hover {
   box-shadow: 0 0 0 10px rgba(255,85,0, .1)
 }
@@ -69,7 +171,6 @@ input[type="range"]:focus::-webkit-slider-thumb {
 }
 
 /* Hover, active & focus Thumb: Firfox */
-
 input[type="range"]::-moz-range-thumb:hover {
   box-shadow: 0 0 0 10px rgba(255,85,0, .1)
 }
@@ -78,4 +179,17 @@ input[type="range"]:active::-moz-range-thumb {
 }
 input[type="range"]:focus::-moz-range-thumb {
   box-shadow: 0 0 0 13px rgba(255,85,0, .2)
+}
+
+#statusLabel {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+#statusDot {
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
 }

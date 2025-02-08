@@ -8,44 +8,76 @@
     <script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
     <script src="{{ url_for('static', filename='js/renderer.js') }}" defer></script>
 </head>
+<header>
+    <h1>Quake Table Control System</h1>
+    <p id="statusLabel">
+        <span id="statusDot"></span> Disconnected
+    </p>
+</header>
 <body>
-    <div class="controls-card">
-        <h2>Manual Controls</h2>
-        <label>
-        <input type="range"
-            min="0"
-            max="100"
-            value="50"
-            step="10"
-            class="slider">
-    </label>
+    <div class="container">
+        <div class="controls-container">
+            <div class="controls-card">
+                <h2>Manual Controls</h2>
+                <h3>Frequency</h3>
+                <p> Frequency in Hz</p>
+                <label>
+                    <input type="range"
+                        id="freqRange"
+                        min="0"
+                        max="100"
+                        value="0"
+                        step="1"
+                        class="slider">
+                    <span id="freqVal">0</span> <br>
+                </label>
+                <h3>Displacement</h3>
+                <p> Displacement in mm from the centre</p>
+                <label>
+                    <input type="range"
+                        id="dispRange"
+                        min="0"
+                        max="100"
+                        value="0"
+                        step="1"
+                        class="slider">
+                    <span id="dispVal">0</span> <br>
+                </label>
+                <button id="sendManualButton">Send Manual Command</button>
+            </div>
+
+            <div class="cosine-card">
+                <h2>Cosine Waveform Generation</h2>
+                <label>
+                    <input type="range" id="range2" min="0" max="100" value="0">
+                    <span class="value">50</span> <br>
+                </label>
+                <label for="grndSpeed">Peak Ground Speed(m/s)</label>
+                <input type="text" id="grndSpeed"><br><br>
+
+                <label for="grndAcceleration">Peak Ground Acceleration(m/s^2)</label>
+                <input type="text" id="grndAcceleration"><br><br>
+
+                <label for="numOfCycles">Number of Cycles</label>
+                <input type="text" id="numOfCycles"><br><br>
+
+                <input type="text" id="percentDamped" disabled>
+                <label for="percentDamped">Percent Damped</label>
+
+                <input type="checkbox" id="dampedCheckbox">
+                <label for="dampedCheckbox">Damped</label> <br>
+
+                <button id="sendDataButton">Begin Simulation</button>
+            </div>
+        </div>
+
+        <button id="stopSimulationButton">Stop Simulation</button>
+        <p id="response"></p>
+
+        <div class="graph-container">
+            <canvas id="myChart"></canvas>
+        </div>
     </div>
-
-    <div class="cosine-card">
-        <h2>Cosine Waveform Generation</h2>
-        <label>
-        <input type="range" id="range" min="0" max="100" value="0">
-        <span class="value">50</span> <br>
-
-    </label>
-        <label for="grndSpeed">Peak Ground Speed(m/s)</label>
-        <input type="text" id="grndSpeed"><br><br>
-
-        <label for="grndAcceleration">Peak Ground Acceleration(m/s^2)</label>
-        <input type="text" id="grndAcceleration"><br><br>
-
-        <label for="numOfCycles">Number of Cycles</label>
-        <input type="text" id="numOfCycles"><br><br>
-
-        <input type="text" id="percentDamped" disabled>
-        <label for="percentDamped">Percent Damped</label>
-
-        <input type="checkbox" id="dampedCheckbox">
-        <label for="dampedCheckbox">Damped</label>
-    </div>
-    <canvas id="myChart"></canvas>
-    <button id="sendDataButton">Begin Simulation</button>
-    <p id="response"></p>
 
 </body>
 </html>

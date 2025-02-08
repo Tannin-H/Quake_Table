@@ -1,21 +1,44 @@
+let chart;
+let animationFrame;
+let startTime = null;
+let pauseTime = null;
+let isPaused = false;
+let pointsPerSecond;
+let windowDuration = 5; // Show 5 seconds of data at a time
+
 // Function to send movement data on button click
 async function sendMovementData() {
     try {
         const response = await fetch('/start-movement', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'text/plain'
             }
         });
-        const result = await response.json();
-        document.getElementById('response').innerText =
-            result.status === "success" ? `Response: ${result.response}` : `Error: ${result.message}`;
+        const result = await response.text();
+        document.getElementById('response').innerText = `Response: ${result}`;
     } catch (error) {
         document.getElementById('response').innerText = `Error: ${error.message}`;
     }
 }
 
-// Attach event listener to the button
+// Function to stop the table and reset to home position
+async function stopMovement() {
+    try {
+        const response = await fetch('/stop-movement', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain'
+            }
+        });
+        const result = await response.text();
+        document.getElementById('response').innerText = `Response: ${result}`;
+    } catch (error) {
+        document.getElementById('response').innerText = `Error: ${error.message}`;
+    }
+}
+
+// Attach event listener to the send data button
 document.addEventListener('DOMContentLoaded', () => {
     const button = document.getElementById('sendDataButton');
     if (button) { // Check if button exists
@@ -25,26 +48,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-const sliderEl = document.querySelector("#range")
-const sliderValue = document.querySelector(".value")
-
-sliderEl.addEventListener("input", (event) => {
-  const tempSliderValue = event.target.value;
-  sliderValue.textContent = tempSliderValue;
-
-  const progress = (tempSliderValue / sliderEl.max) * 100;
-
-  sliderEl.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+// Attach event listener to the stop movement button
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('stopSimulationButton');
+    if (button) { // Check if button exists
+        button.addEventListener('click', stopMovement);
+    } else {
+        console.error("Button not found!");
+    }
 });
 
+const freqSlider = document.querySelector("#freqRange")
+const freqSliderValue = document.querySelector("#freqVal")
 
-let chart;
-let animationFrame;
-let startTime = null;
-let pauseTime = null;
-let isPaused = false;
-let pointsPerSecond;
-let windowDuration = 5; // Show 5 seconds of data at a time
+freqSlider.addEventListener("input", (event) => {
+  const tempSliderValue = event.target.value;
+  freqSliderValue.textContent = tempSliderValue;
+
+  const progress = (tempSliderValue / freqSlider.max) * 100;
+
+  freqSlider.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+});
+
+const dispSlider = document.querySelector("#dispRange")
+const dispSliderValue = document.querySelector("#dispVal")
+
+dispSlider.addEventListener("input", (event) => {
+  const tempSliderValue = event.target.value;
+  dispSliderValue.textContent = tempSliderValue;
+
+  const progress = (tempSliderValue / dispSlider.max) * 100;
+
+  dispSlider.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+});
 
 async function initChart() {
     const response = await fetch('/data');

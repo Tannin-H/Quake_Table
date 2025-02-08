@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from flask import Flask, jsonify, render_template
-from main import send_movement_data, open_connection
+from main import *
 
 app = Flask(__name__)
 
@@ -22,9 +22,21 @@ def start_movement():
         # Send data using the pre-opened connection
         response = send_movement_data(arduino_connection)
         print(response)
-        return
+        return response, 200
     except Exception as e:
-        print("Error")
+        print("Error sending movement data " + str(e))
+        return
+
+
+@app.route('/stop-movement', methods=['POST'])
+def stop_movement():
+    try:
+        print("Sending stop movement command")
+        response = stop_table(arduino_connection)
+        print(response)
+        return response, 200
+    except Exception as e:
+        print("Error stopping table " + str(e))
         return
 
 @app.route('/data')
