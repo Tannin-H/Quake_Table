@@ -20,7 +20,6 @@
             <div class="controls-card">
                 <h2>Manual Controls</h2>
                 <h3>Frequency</h3>
-                <p> Frequency in Hz</p>
                 <label>
                     <input type="range"
                         id="freqRange"
@@ -29,37 +28,71 @@
                         value="0"
                         step="1"
                         class="slider">
-                    <span id="freqVal">0</span> <br>
+                    <span id="freqVal">0</span> Hz<br>
                 </label>
                 <h3>Displacement</h3>
-                <p> Displacement in mm from the centre</p>
+                <p> From Centre</p>
                 <label>
                     <input type="range"
                         id="dispRange"
                         min="0"
-                        max="100"
+                        max="40"
                         value="0"
-                        step="1"
+                        step="0.5"
                         class="slider">
-                    <span id="dispVal">0</span> <br>
+                    <span id="dispVal">0</span> mm<br>
                 </label>
                 <button id="sendManualButton">Send Manual Command</button>
             </div>
 
             <div class="cosine-card">
                 <h2>Cosine Waveform Generation</h2>
+                <h3>Displacement</h3>
                 <label>
-                    <input type="range" id="range2" min="0" max="100" value="0">
-                    <span class="value">50</span> <br>
+                    <input type="range"
+                        id="waveGenDispRange"
+                        min="0"
+                        max="40"
+                        value="0"
+                        step="0.5"
+                        class="slider">
+                    <span id="waveGenDispVal">0</span> mm<br>
                 </label>
-                <label for="grndSpeed">Peak Ground Speed(m/s)</label>
-                <input type="text" id="grndSpeed"><br><br>
+                <h3>Peak Ground Speed</h3>
+                <label>
+                    <input type="range"
+                        id="GsRange"
+                        min="0"
+                        max="40"
+                        value="0"
+                        step="0.5"
+                        class="slider">
+                    <span id="GsVal">0</span> m/s<br>
+                </label>
 
-                <label for="grndAcceleration">Peak Ground Acceleration(m/s^2)</label>
-                <input type="text" id="grndAcceleration"><br><br>
+                <h3>Peak Ground Acceleration</h3>
+                <label>
+                    <input type="range"
+                        id="GaRange"
+                        min="0"
+                        max="40"
+                        value="0"
+                        step="0.5"
+                        class="slider">
+                    <span id="GaVal">0</span> m/s^2<br>
+                </label>
 
-                <label for="numOfCycles">Number of Cycles</label>
-                <input type="text" id="numOfCycles"><br><br>
+                <h3>Simulation Duration</h3>
+                <label>
+                    <input type="range"
+                        id="SimDurationRange"
+                        min="0"
+                        max="40"
+                        value="0"
+                        step="0.5"
+                        class="slider">
+                    <span id="SimDurationVal">0</span> m/s^2<br>
+                </label>
 
                 <input type="text" id="percentDamped" disabled>
                 <label for="percentDamped">Percent Damped</label>

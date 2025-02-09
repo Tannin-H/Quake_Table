@@ -8,6 +8,10 @@ let windowDuration = 5; // Show 5 seconds of data at a time
 
 let freqSliderVal = 0;
 let dispSliderVal = 0;
+let WaveGenDispSliderVal = 0;
+let GsSliderVal = 0;    // Peak Ground speed slider value
+let GaSliderVal = 0;  // Peak Acceleration speed slider value
+let SimDurationSliderVal = 0; // Simulation duration slider value
 
 // Function to send movement data on button click
 async function sendMovementData() {
@@ -111,6 +115,59 @@ dispSliderElement.addEventListener("input", (event) => {
   const progress = (dispSliderVal / dispSliderElement.max) * 100;
 
   dispSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+});
+
+//Wave Generator Parameter Sliders
+// Displacement Slider
+const WaveGenDispSliderElement = document.querySelector("#waveGenDispRange")
+const WaveGenDispSliderValueElement = document.querySelector("#waveGenDispVal")
+
+WaveGenDispSliderElement.addEventListener("input", (event) => {
+  WaveGenDispSliderVal = event.target.value;
+  WaveGenDispSliderValueElement.textContent = WaveGenDispSliderVal;
+
+  const progress = (WaveGenDispSliderVal / WaveGenDispSliderElement.max) * 100;
+
+  WaveGenDispSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+});
+
+// Peak Ground Speed Slider
+const GsSliderElement = document.querySelector("#GsRange")
+const GsSliderValueElement = document.querySelector("#GsVal")
+
+GsSliderElement.addEventListener("input", (event) => {
+  GsSliderVal = event.target.value;
+  GsSliderValueElement.textContent = GsSliderVal;
+
+  const progress = (GsSliderVal / GsSliderElement.max) * 100;
+
+  GsSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+});
+
+// Peak Ground Acceleration Slider
+const GaSliderElement = document.querySelector("#GaRange")
+const GaSliderValueElement = document.querySelector("#GaVal")
+
+GaSliderElement.addEventListener("input", (event) => {
+  GaSliderVal = event.target.value;
+  GaSliderValueElement.textContent = GaSliderVal;
+
+  const progress = (GaSliderVal / GaSliderElement.max) * 100;
+
+  GaSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+});
+
+// Simulation Duration Slider
+const SimDurationSliderElement = document.querySelector("#SimDurationRange")
+const SimDurationSliderValueElement = document.querySelector("#SimDurationVal")
+
+SimDurationSliderElement.addEventListener("input", (event) => {
+  SimDurationSliderVal = event.target.value;
+  SimDurationSliderValueElement.textContent = SimDurationSliderVal;
+
+  const progress = (SimDurationSliderVal / SimDurationSliderElement.max) * 100;
+
+  SimDurationSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
 });
 
 async function initChart() {
