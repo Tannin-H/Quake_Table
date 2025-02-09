@@ -24,7 +24,7 @@ class PicoLink:
         self.ack = ack
         self.configureController()
 
-    def open(self, timeout=10):
+    def open(self, timeout=5):
         start = time.time()
         print(f"Waiting for '{self.ack}' from Pico on port {self.picoPort} ...")
         while time.time() - start <= timeout:
@@ -73,6 +73,7 @@ class PicoLink:
                 # Attempt to reconnect to the microcontroller
                 self.serial = serial.Serial(self.picoPort, self.baudRate, timeout=1)
                 print("[INFO] Successfully reconnected to the microcontroller. Listening for commands from the controller.")
+                self.send("CONF")
                 controllerThread = threading.Thread(target=self.listenToController)
                 controllerThread.daemon = True
                 controllerThread.start()

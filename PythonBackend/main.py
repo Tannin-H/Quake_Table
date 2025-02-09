@@ -8,9 +8,11 @@ def open_connection():
     conn.open()
     return conn
 
-def run_manual_routine(controller_conn, speed, displacement):
-    forwardCMD = f"{displacement} 0 {speed} 0"
-    backwardCMD = f"{displacement} 0 {speed} 1"
+def run_manual_routine(controller_conn, freq, displacement):
+    steps = int(displacement) * 80
+    speed = int(freq) * 500
+    forwardCMD = f"{speed} 1000 {steps} 0"
+    backwardCMD = f"{speed} 1000 {steps} 1"
     controller_conn.send(f"MANUAL {forwardCMD} {backwardCMD}\n")
     return "Manual routine started."
 
