@@ -6,6 +6,9 @@ let isPaused = false;
 let pointsPerSecond;
 let windowDuration = 5; // Show 5 seconds of data at a time
 
+let freqSliderVal = 0;
+let dispSliderVal = 0;
+
 // Function to send movement data on button click
 async function sendMovementData() {
     try {
@@ -38,6 +41,23 @@ async function stopMovement() {
     }
 }
 
+// Function to stop the table and reset to home position
+async function sendManual() {
+    try {
+        const response = await fetch('/start-manual', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ speed: freqSliderVal, displacement: dispSliderVal })
+        });
+        const result = await response.text();
+        document.getElementById('response').innerText = `Response: ${result}`;
+    } catch (error) {
+        document.getElementById('response').innerText = `Error: ${error.message}`;
+    }
+}
+
 // Attach event listener to the send data button
 document.addEventListener('DOMContentLoaded', () => {
     const button = document.getElementById('sendDataButton');
@@ -58,28 +78,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-const freqSlider = document.querySelector("#freqRange")
-const freqSliderValue = document.querySelector("#freqVal")
-
-freqSlider.addEventListener("input", (event) => {
-  const tempSliderValue = event.target.value;
-  freqSliderValue.textContent = tempSliderValue;
-
-  const progress = (tempSliderValue / freqSlider.max) * 100;
-
-  freqSlider.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+// Attach event listener to the send data button
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('sendManualButton');
+    if (button) { // Check if button exists
+        button.addEventListener('click', sendManual);
+    } else {
+        console.error("Button not found!");
+    }
 });
 
-const dispSlider = document.querySelector("#dispRange")
-const dispSliderValue = document.querySelector("#dispVal")
+const freqSliderElement = document.querySelector("#freqRange")
+const freqSliderValueElement = document.querySelector("#freqVal")
 
-dispSlider.addEventListener("input", (event) => {
-  const tempSliderValue = event.target.value;
-  dispSliderValue.textContent = tempSliderValue;
+freqSliderElement.addEventListener("input", (event) => {
+  freqSliderVal = event.target.value;
+  freqSliderValueElement.textContent = freqSliderVal;
 
-  const progress = (tempSliderValue / dispSlider.max) * 100;
+  const progress = (freqSliderVal / freqSliderElement.max) * 100;
 
-  dispSlider.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+
+  freqSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+});
+
+const dispSliderElement = document.querySelector("#dispRange")
+const dispSliderValueElement = document.querySelector("#dispVal")
+
+dispSliderElement.addEventListener("input", (event) => {
+  dispSliderVal = event.target.value;
+  dispSliderValueElement.textContent = dispSliderVal;
+
+  const progress = (dispSliderVal / dispSliderElement.max) * 100;
+
+  dispSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
 });
 
 async function initChart() {

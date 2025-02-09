@@ -2,17 +2,20 @@ import time
 
 from pico_link import PicoLink
 
+
 def open_connection():
     conn = PicoLink()
     conn.open()
     return conn
 
-def start_manual_routine(controller_conn):
-    controller_conn.send("MANUAL 800 0 200 0 800 0 200 1" + '\n')
+def run_manual_routine(controller_conn, speed, displacement):
+    forwardCMD = f"{displacement} 0 {speed} 0"
+    backwardCMD = f"{displacement} 0 {speed} 1"
+    controller_conn.send(f"MANUAL {forwardCMD} {backwardCMD}\n")
     return "Manual routine started."
 
 def send_movement_data(controller_conn):
-     # Each command follows the format:
+    # Each command follows the format:
     # MOVE <speed> <acceleration> <steps> <direction (0|1)>
     batch_commands = [
         "MOVE 7000 1000 2000 0",

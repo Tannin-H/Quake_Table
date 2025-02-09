@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from main import *
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ def home():
 @app.route('/start-movement', methods=['POST'])
 def start_movement():
     try:
-        print("Starting movement")
+        print("Starting Simulation")
         # Send data using the pre-opened connection
         response = send_movement_data(arduino_connection)
         print(response)
@@ -26,6 +26,31 @@ def start_movement():
     except Exception as e:
         print("Error sending movement data " + str(e))
         return
+
+@app.route('/start-manual', methods=['POST'])
+def start_manual():
+    try:
+        print("Starting Manual Controlled Movement")
+
+        # Get JSON data from request
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"error": "No data received"}), 400
+
+        # Extract parameters from the received JSON
+        speed = data.get('speed', 0)  # Default to 0 if not provided
+        displacement = data.get('displacement', 0)  # Default to 'unknown' if not provided
+
+        print(speed, displacement)
+        # Call your function with the received parameters
+        response = run_manual_routine(arduino_connection, speed, displacement)
+
+        print(response)
+        return jsonify({"message": "Manual routine started", "response": response}), 200
+    except Exception as e:
+        print("Error running manual routine: " + str(e))
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/stop-movement', methods=['POST'])
