@@ -24,7 +24,7 @@ class PicoLink:
         self.ack = ack
         self.configureController()
 
-    def open(self, timeout=5):
+    def open(self, timeout=2):
         start = time.time()
         print(f"Waiting for '{self.ack}' from Pico on port {self.picoPort} ...")
         while time.time() - start <= timeout:

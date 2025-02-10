@@ -16,18 +16,14 @@ def run_manual_routine(controller_conn, freq, displacement):
     controller_conn.send(f"MANUAL {forwardCMD} {backwardCMD}\n")
     return "Manual routine started."
 
-def send_movement_data(controller_conn):
+def send_movement_data(controller_conn, command_batch):
     # Each command follows the format:
     # MOVE <speed> <acceleration> <steps> <direction (0|1)>
-    batch_commands = [
-        "MOVE 7000 1000 2000 0",
-        "MOVE 8000 1000 2000 1",
-        "MOVE 7000 1000 2000 0",
-        "MOVE 8000 1000 2000 1"
-    ]
-
+    batch_commands = command_batch
     # Inform the controller of the batch size.
     batch_size_command = "BATCH_SIZE {}".format(len(batch_commands))
+    # print(batch_size_command)
+    # print(batch_commands)
     controller_conn.send(batch_size_command + '\n')
 
     # Send each movement command in the batch.

@@ -20,7 +20,8 @@ def start_movement():
     try:
         print("Starting Simulation")
         # Send data using the pre-opened connection
-        response = send_movement_data(arduino_connection)
+        command_batch = request.get_json().get('commands')
+        response = send_movement_data(arduino_connection, command_batch)
         print(response)
         return response, 200
     except Exception as e:

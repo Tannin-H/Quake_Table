@@ -1,281 +1,390 @@
-let chart;
-let animationFrame;
-let startTime = null;
-let pauseTime = null;
-let isPaused = false;
-let pointsPerSecond;
-let windowDuration = 5; // Show 5 seconds of data at a time
-
-let freqSliderVal = 0;
-let dispSliderVal = 0;
-let WaveGenDispSliderVal = 0;
-let GsSliderVal = 0;    // Peak Ground speed slider value
-let GaSliderVal = 0;  // Peak Acceleration speed slider value
-let SimDurationSliderVal = 0; // Simulation duration slider value
-
-// Function to send movement data on button click
-async function sendMovementData() {
-    try {
-        const response = await fetch('/start-movement', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain'
-            }
-        });
-        const result = await response.text();
-        document.getElementById('response').innerText = `Response: ${result}`;
-    } catch (error) {
-        document.getElementById('response').innerText = `Error: ${error.message}`;
+// Global state
+const state = {
+    chart: null,
+    animation: {
+        frame: null,
+        startTime: null,
+        pauseTime: null,
+        isPaused: false,
+        pointsPerSecond: 20,
+        windowDuration: 10,
+        dampingPercentage: 50,
+        timeStep: 0.01
+    },
+    sliders: {
+        freq: 0,
+        disp: 0,
+        waveGenDisp: 0,
+        gs: 0,
+        ga: 0,
+        simDuration: 5  // Default to 5 seconds
+    },
+    constants: {
+        stepsPerMm: 400 / 5, // 400 steps = 5mm
+        defaultAcceleration: 1000
     }
-}
+};
 
-// Function to stop the table and reset to home position
-async function stopMovement() {
-    try {
-        const response = await fetch('/stop-movement', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain'
-            }
-        });
-        const result = await response.text();
-        document.getElementById('response').innerText = `Response: ${result}`;
-    } catch (error) {
-        document.getElementById('response').innerText = `Error: ${error.message}`;
-    }
-}
-
-// Function to stop the table and reset to home position
-async function sendManual() {
-    try {
-        const response = await fetch('/start-manual', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ speed: freqSliderVal, displacement: dispSliderVal })
-        });
-        const result = await response.text();
-        document.getElementById('response').innerText = `Response: ${result}`;
-    } catch (error) {
-        document.getElementById('response').innerText = `Error: ${error.message}`;
-    }
-}
-
-// Attach event listener to the send data button
-document.addEventListener('DOMContentLoaded', () => {
-    const button = document.getElementById('sendDataButton');
-    if (button) { // Check if button exists
-        button.addEventListener('click', sendMovementData);
-    } else {
-        console.error("Button not found!");
-    }
-});
-
-// Attach event listener to the stop movement button
-document.addEventListener('DOMContentLoaded', () => {
-    const button = document.getElementById('stopSimulationButton');
-    if (button) { // Check if button exists
-        button.addEventListener('click', stopMovement);
-    } else {
-        console.error("Button not found!");
-    }
-});
-
-// Attach event listener to the send data button
-document.addEventListener('DOMContentLoaded', () => {
-    const button = document.getElementById('sendManualButton');
-    if (button) { // Check if button exists
-        button.addEventListener('click', sendManual);
-    } else {
-        console.error("Button not found!");
-    }
-});
-
-const freqSliderElement = document.querySelector("#freqRange")
-const freqSliderValueElement = document.querySelector("#freqVal")
-
-freqSliderElement.addEventListener("input", (event) => {
-  freqSliderVal = event.target.value;
-  freqSliderValueElement.textContent = freqSliderVal;
-
-  const progress = (freqSliderVal / freqSliderElement.max) * 100;
-
-
-  freqSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
-});
-
-const dispSliderElement = document.querySelector("#dispRange")
-const dispSliderValueElement = document.querySelector("#dispVal")
-
-dispSliderElement.addEventListener("input", (event) => {
-  dispSliderVal = event.target.value;
-  dispSliderValueElement.textContent = dispSliderVal;
-
-  const progress = (dispSliderVal / dispSliderElement.max) * 100;
-
-  dispSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
-});
-
-//Wave Generator Parameter Sliders
-// Displacement Slider
-const WaveGenDispSliderElement = document.querySelector("#waveGenDispRange")
-const WaveGenDispSliderValueElement = document.querySelector("#waveGenDispVal")
-
-WaveGenDispSliderElement.addEventListener("input", (event) => {
-  WaveGenDispSliderVal = event.target.value;
-  WaveGenDispSliderValueElement.textContent = WaveGenDispSliderVal;
-
-  const progress = (WaveGenDispSliderVal / WaveGenDispSliderElement.max) * 100;
-
-  WaveGenDispSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
-});
-
-// Peak Ground Speed Slider
-const GsSliderElement = document.querySelector("#GsRange")
-const GsSliderValueElement = document.querySelector("#GsVal")
-
-GsSliderElement.addEventListener("input", (event) => {
-  GsSliderVal = event.target.value;
-  GsSliderValueElement.textContent = GsSliderVal;
-
-  const progress = (GsSliderVal / GsSliderElement.max) * 100;
-
-  GsSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
-});
-
-// Peak Ground Acceleration Slider
-const GaSliderElement = document.querySelector("#GaRange")
-const GaSliderValueElement = document.querySelector("#GaVal")
-
-GaSliderElement.addEventListener("input", (event) => {
-  GaSliderVal = event.target.value;
-  GaSliderValueElement.textContent = GaSliderVal;
-
-  const progress = (GaSliderVal / GaSliderElement.max) * 100;
-
-  GaSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
-});
-
-// Simulation Duration Slider
-const SimDurationSliderElement = document.querySelector("#SimDurationRange")
-const SimDurationSliderValueElement = document.querySelector("#SimDurationVal")
-
-SimDurationSliderElement.addEventListener("input", (event) => {
-  SimDurationSliderVal = event.target.value;
-  SimDurationSliderValueElement.textContent = SimDurationSliderVal;
-
-  const progress = (SimDurationSliderVal / SimDurationSliderElement.max) * 100;
-
-  SimDurationSliderElement.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
-});
-
-async function initChart() {
-    const response = await fetch('/data');
-    const data = await response.json();
-    pointsPerSecond = data.pointsPerSecond;
-
-    const ctx = document.getElementById('myChart').getContext('2d');
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.x,
-            datasets: [{
+// Chart configuration
+const chartConfig = {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            {
                 label: 'Signal',
-                data: data.y,
+                data: [],
                 borderColor: 'rgb(75, 192, 192)',
                 tension: 0.3,
                 pointRadius: 0
-            }]
-        },
-        options: {
-            animation: false,
-            scales: {
-                x: {
-                    type: 'linear',
-                    title: {
-                        display: true,
-                        text: 'Time (seconds)'
-                    }
-                },
-                y: {
-                    min: -1.5,
-                    max: 1.5,
-                    title: {
-                        display: true,
-                        text: 'Amplitude'
-                    }
-                }
             },
-            plugins: {
-                legend: {
-                    display: false
+            {
+                label: 'Dot',
+                data: [],
+                borderColor: 'rgb(255, 99, 132)',
+                pointRadius: 5,
+                pointBackgroundColor: 'rgb(255, 99, 132)',
+                showLine: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+            x: {
+                type: 'linear',
+                title: { display: true, text: 'Time (seconds)' },
+                min: 0,
+                max: 5 // Initial window duration
+            },
+            y: {
+                title: { display: true, text: 'Amplitude' },
+                suggestedMin: -1,
+                suggestedMax: 1
+            }
+        },
+        plugins: { legend: { display: false } }
+    }
+};
+
+// API calls
+const api = {
+    async sendRequest(endpoint, method, data = null) {
+        try {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
                 }
+            };
+            if (data) options.body = JSON.stringify(data);
+
+            const response = await fetch(endpoint, options);
+            const result = await response.text();
+            document.getElementById('response').innerText = `Response: ${result}`;
+            return result;
+        } catch (error) {
+            document.getElementById('response').innerText = `Error: ${error.message}`;
+            throw error;
+        }
+    },
+
+    convertWaveformToCommands(yData) {
+        const commands = [];
+        let previousPosition = 0;
+        const { stepsPerMm, defaultAcceleration } = state.constants;
+
+        for (let i = 1; i < yData.length; i += 2) { // Skip every other point (downsampling)
+            const positionDiff = yData[i] - previousPosition;
+            const steps = Math.round(positionDiff * stepsPerMm);
+
+            if (Math.abs(steps) < 79) continue; // Skip very small movements
+
+            const direction = steps > 0 ? 1 : 0;
+            const speed = Math.max(1000, Math.round(state.sliders.gs * 1000));
+
+            commands.push(`MOVE ${speed} ${defaultAcceleration} ${Math.abs(steps)} ${direction}`);
+            previousPosition = yData[i];
+        }
+
+        return commands;
+    },
+
+    async startMovement() {
+        const numPoints = Math.round(state.sliders.simDuration * state.animation.pointsPerSecond);
+        const lambda = -Math.log(1 - state.animation.dampingPercentage / 100) / Math.max(0.1, state.sliders.simDuration);
+
+        const { yData } = chartFunctions.calculateWaveformData(numPoints, 0, lambda, state.sliders);
+        const commands = this.convertWaveformToCommands(yData);
+
+        const data = {
+            commands: commands,
+            parameters: {
+                gs: state.sliders.gs,
+                ga: state.sliders.ga,
+                simulationDuration: state.sliders.simDuration
+            }
+        };
+
+        return await api.sendRequest('/start-movement', 'POST', data);
+    },
+
+    stopMovement() {
+        return api.sendRequest('/stop-movement', 'POST');
+    },
+
+    sendManual() {
+        return api.sendRequest('/start-manual', 'POST', {
+            speed: state.sliders.freq,
+            displacement: state.sliders.disp
+        });
+    }
+};
+
+// Slider handling
+class SliderHandler {
+    static setupSlider(id, valueId, stateKey) {
+        const slider = document.querySelector(`#${id}`);
+        const valueElement = document.querySelector(`#${valueId}`);
+
+        if (!slider || !valueElement) return;
+
+        // Set initial value
+        state.sliders[stateKey] = parseFloat(slider.value);
+        valueElement.textContent = slider.value;
+
+        slider.addEventListener('input', (event) => {
+            const value = parseFloat(event.target.value);
+            state.sliders[stateKey] = value;
+            valueElement.textContent = value;
+
+            const progress = (value / slider.max) * 100;
+            slider.style.background = `linear-gradient(to right, #f50 ${progress}%, #ccc ${progress}%)`;
+
+            // Update scale when wave displacement changes
+            if (id === 'waveGenDispRange') {
+                chartFunctions.updateScale();
+            }
+        });
+    }
+}
+
+// Chart functions
+const chartFunctions = {
+    init() {
+        const ctx = document.getElementById('myChart')?.getContext('2d');
+        if (!ctx) {
+            console.error('Could not find chart canvas element');
+            return;
+        }
+
+        // Clear any existing chart
+        if (state.chart) {
+            state.chart.destroy();
+        }
+
+        state.chart = new Chart(ctx, chartConfig);
+        console.log('Chart initialized:', state.chart);
+    },
+
+    updateScale() {
+        if (!state.chart) return;
+
+        // Calculate the maximum possible amplitude based on wave displacement
+        const maxAmplitude = state.sliders.waveGenDisp * 1.2; // Add 20% margin
+
+        // Update the chart scales
+        state.chart.options.scales.y.suggestedMin = -maxAmplitude;
+        state.chart.options.scales.y.suggestedMax = maxAmplitude;
+
+        // If there's no animation running, update the chart
+        if (!state.animation.frame) {
+            state.chart.update('none');
+        }
+    },
+
+    update(timestamp) {
+        const { animation, sliders, chart } = state;
+        if (!chart) {
+            console.error('Chart not initialized');
+            return;
+        }
+
+        if (!animation.startTime) {
+            animation.startTime = timestamp;
+        }
+
+        if (animation.isPaused) {
+            if (!animation.pauseTime) animation.pauseTime = timestamp;
+            return;
+        }
+
+        if (animation.pauseTime) {
+            animation.startTime += timestamp - animation.pauseTime;
+            animation.pauseTime = null;
+        }
+
+        const elapsedSeconds = (timestamp - animation.startTime) / 1000;
+
+        // Update time display
+        const timeDisplay = document.getElementById('timeDisplay');
+        if (timeDisplay) {
+            timeDisplay.textContent = `Time: ${elapsedSeconds.toFixed(2)}s`;
+        }
+
+        // Check duration
+        if (elapsedSeconds > sliders.simDuration) {
+            chartFunctions.stop();
+            return;
+        }
+
+        const numPoints = sliders.simDuration * animation.pointsPerSecond;
+        const lambda = -Math.log(1 - animation.dampingPercentage / 100) / Math.max(0.1, sliders.simDuration);
+
+        const { xData, yData } = chartFunctions.calculateWaveformData(
+            numPoints,
+            elapsedSeconds,
+            lambda,
+            sliders
+        );
+
+        // Update chart data
+        chart.data.labels = xData;
+        chart.data.datasets[0].data = yData;
+
+        // Update dot position
+        const dotIndex = Math.floor(elapsedSeconds * animation.pointsPerSecond);
+        const dotData = new Array(numPoints).fill(null);
+        dotData[dotIndex] = yData[dotIndex];
+        chart.data.datasets[1].data = dotData;
+
+        // Center the viewport on the dot only after it reaches the center
+        const dotPosition = elapsedSeconds; // Current time is the dot's position
+        const halfWindow = animation.windowDuration / 2; // Half the window duration
+
+        let minX = chart.options.scales.x.min || 0; // Default to 0 if not set
+        let maxX = chart.options.scales.x.max || animation.windowDuration; // Default to windowDuration if not set
+
+        // Check if the dot has reached the center of the viewport
+        if (dotPosition >= halfWindow && dotPosition <= sliders.simDuration - halfWindow) {
+            // Start scrolling to keep the dot centered
+            minX = dotPosition - halfWindow;
+            maxX = dotPosition + halfWindow;
+        } else if (dotPosition > sliders.simDuration - halfWindow) {
+            // Stop scrolling at the end of the simulation
+            minX = sliders.simDuration - animation.windowDuration;
+            maxX = sliders.simDuration;
+        }
+
+        // Update the chart scales
+        chart.options.scales.x.min = minX;
+        chart.options.scales.x.max = maxX;
+
+        chart.update('none');
+
+        animation.frame = requestAnimationFrame(chartFunctions.update);
+    },
+
+    calculateWaveformData(numPoints, elapsedSeconds, lambda, sliders) {
+        const xData = new Array(numPoints);
+        const yData = new Array(numPoints);
+
+        for (let i = 0; i < numPoints; i++) {
+            const x = i / state.animation.pointsPerSecond;
+            xData[i] = x;
+
+            if (x < 0 || x > sliders.simDuration) {
+                yData[i] = 0;
+            } else {
+                yData[i] = sliders.waveGenDisp *
+                          Math.exp(-lambda * x) *
+                          Math.cos(2 * Math.PI * sliders.gs * x);
             }
         }
+
+        return { xData, yData };
+    },
+
+    start() {
+        console.log('Starting animation...');
+        const { animation } = state;
+        if (animation.isPaused) {
+            animation.isPaused = false;
+        } else {
+            animation.startTime = null;
+            animation.isPaused = false;
+        }
+        animation.frame = requestAnimationFrame(chartFunctions.update);
+    },
+
+    stop() {
+        if (state.animation.frame) {
+            cancelAnimationFrame(state.animation.frame);
+            state.animation.frame = null;
+        }
+    },
+
+    pause() {
+        state.animation.isPaused = true;
+        state.animation.pauseTime = null;
+    },
+
+    reset() {
+        chartFunctions.stop();
+        state.animation.startTime = null;
+        state.animation.pauseTime = null;
+        state.animation.isPaused = false;
+        document.getElementById('timeDisplay').textContent = 'Time: 0.00s';
+        chartFunctions.init();
+    }
+};
+
+// Initialize everything when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize chart
+    chartFunctions.init();
+    console.log('DOM Content Loaded, chart initialized');
+
+    // Setup all sliders
+    const sliderConfigs = [
+        ['freqRange', 'freqVal', 'freq'],
+        ['dispRange', 'dispVal', 'disp'],
+        ['waveGenDispRange', 'waveGenDispVal', 'waveGenDisp'],
+        ['GsRange', 'GsVal', 'gs'],
+        ['GaRange', 'GaVal', 'ga'],
+        ['SimDurationRange', 'SimDurationVal', 'simDuration']
+    ];
+
+    sliderConfigs.forEach(([id, valueId, stateKey]) => {
+        SliderHandler.setupSlider(id, valueId, stateKey);
     });
-}
 
-function updateGraph(timestamp) {
-    if (!startTime) startTime = timestamp;
-    if (isPaused) {
-        if (!pauseTime) pauseTime = timestamp;
-        return;
-    }
+    // Setup button listeners
+    const buttonConfigs = [
+        ['sendDataButton', async () => {
+            try {
+                console.log('Sending data...');
+                chartFunctions.start()
+                await api.startMovement();
+            } catch (error) {
+                console.error('Error starting movement:', error);
+            }
+        }],
+        ['stopSimulationButton', () => {
+            api.stopMovement();
+            chartFunctions.stop();
+        }],
+        ['sendManualButton', api.sendManual],
+    ];
 
-    if (pauseTime) {
-        startTime += timestamp - pauseTime;
-        pauseTime = null;
-    }
-
-    const elapsedSeconds = (timestamp - startTime) / 1000;
-    document.getElementById('timeDisplay').textContent = `Time: ${elapsedSeconds.toFixed(2)}s`;
-
-    // Calculate new data points
-    const numPoints = windowDuration * pointsPerSecond;
-    const xData = new Array(numPoints);
-    const yData = new Array(numPoints);
-
-    for (let i = 0; i < numPoints; i++) {
-        const x = elapsedSeconds + (i - numPoints) / pointsPerSecond;
-        xData[i] = x;
-        yData[i] = Math.sin(2 * Math.PI * 0.5 * x); // 0.5 Hz sine wave
-    }
-
-    // Update chart data
-    chart.data.labels = xData;
-    chart.data.datasets[0].data = yData;
-    chart.options.scales.x.min = elapsedSeconds - windowDuration;
-    chart.options.scales.x.max = elapsedSeconds;
-    chart.update();
-
-    animationFrame = requestAnimationFrame(updateGraph);
-}
-
-function startAnimation() {
-    if (isPaused) {
-        isPaused = false;
-        animationFrame = requestAnimationFrame(updateGraph);
-    } else {
-        startTime = null;
-        isPaused = false;
-        animationFrame = requestAnimationFrame(updateGraph);
-    }
-}
-
-function pauseAnimation() {
-    isPaused = true;
-    pauseTime = null;
-}
-
-function resetAnimation() {
-    cancelAnimationFrame(animationFrame);
-    startTime = null;
-    pauseTime = null;
-    isPaused = false;
-    document.getElementById('timeDisplay').textContent = 'Time: 0.00s';
-    initChart();
-}
-
-// Initialize the chart when the page loads
-document.addEventListener('DOMContentLoaded', initChart);
+    buttonConfigs.forEach(([id, handler]) => {
+        const button = document.getElementById(id);
+        if (button) {
+            button.addEventListener('click', handler);
+        } else {
+            console.error(`Button with id ${id} not found`);
+        }
+    });
+});
