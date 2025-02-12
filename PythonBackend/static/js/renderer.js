@@ -7,9 +7,7 @@ const state = {
         pauseTime: null,
         isPaused: false,
         pointsPerSecond: 20,
-        windowDuration: 10,
-        dampingPercentage: 50,
-        timeStep: 0.01
+        windowDuration: 10, timeStep: 0.01
     },
     sliders: {
         freq: 0,
@@ -17,7 +15,8 @@ const state = {
         waveGenDisp: 0,
         gs: 0,
         ga: 0,
-        simDuration: 5  // Default to 5 seconds
+        simDuration: 5,  // Default to 5 seconds
+        percentDamped: 0
     },
     constants: {
         stepsPerMm: 400 / 5, // 400 steps = 5mm
@@ -80,14 +79,26 @@ const api = {
                 }
             };
             if (data) options.body = JSON.stringify(data);
-
+            console.log(endpoint)
             const response = await fetch(endpoint, options);
-            const result = await response.text();
-            document.getElementById('response').innerText = `Response: ${result}`;
+            const result = await response.json();
+
+            // If it's not a successful response, log the error
+            if (!response.ok || result.status === 'error') {
+                console.error(`Request to ${endpoint} failed:`, result.message || 'An error occurred');
+                return result;
+            }
+
+            // Only show success messages
+            if (result.status === 'success' && result.message) {
+                document.getElementById('response').innerText = `Response: ${result.message}`;
+            }
+
             return result;
         } catch (error) {
-            document.getElementById('response').innerText = `Error: ${error.message}`;
-            throw error;
+            // Log any unexpected errors
+            console.error(`Unexpected error in request to ${endpoint}:`, error);
+            return { status: 'error', message: error.message };
         }
     },
 
@@ -96,7 +107,7 @@ const api = {
         let previousPosition = 0;
         const { stepsPerMm, defaultAcceleration } = state.constants;
 
-        for (let i = 1; i < yData.length; i += 2) { // Skip every other point (downsampling)
+        for (let i = 1; i < yData.length; i += 2) { // Skip every other point (down sampling)
             const positionDiff = yData[i] - previousPosition;
             const steps = Math.round(positionDiff * stepsPerMm);
 
@@ -114,7 +125,7 @@ const api = {
 
     async startMovement() {
         const numPoints = Math.round(state.sliders.simDuration * state.animation.pointsPerSecond);
-        const lambda = -Math.log(1 - state.animation.dampingPercentage / 100) / Math.max(0.1, state.sliders.simDuration);
+        const lambda = -Math.log(1 - state.sliders.percentDamped / 100) / Math.max(0.1, state.sliders.simDuration);
 
         const { yData } = chartFunctions.calculateWaveformData(numPoints, 0, lambda, state.sliders);
         const commands = this.convertWaveformToCommands(yData);
@@ -133,6 +144,10 @@ const api = {
 
     stopMovement() {
         return api.sendRequest('/stop-movement', 'POST');
+    },
+
+    resetPosition() {
+        return api.sendRequest('/reset-position', 'POST');
     },
 
     sendManual() {
@@ -241,7 +256,7 @@ const chartFunctions = {
         }
 
         const numPoints = sliders.simDuration * animation.pointsPerSecond;
-        const lambda = -Math.log(1 - animation.dampingPercentage / 100) / Math.max(0.1, sliders.simDuration);
+        const lambda = -Math.log(1 - sliders.percentDamped / 100) / Math.max(0.1, sliders.simDuration);
 
         const { xData, yData } = chartFunctions.calculateWaveformData(
             numPoints,
@@ -354,7 +369,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ['waveGenDispRange', 'waveGenDispVal', 'waveGenDisp'],
         ['GsRange', 'GsVal', 'gs'],
         ['GaRange', 'GaVal', 'ga'],
-        ['SimDurationRange', 'SimDurationVal', 'simDuration']
+        ['SimDurationRange', 'SimDurationVal', 'simDuration'],
+        ['dampedRange', 'percentDampedVal', 'percentDamped']
     ];
 
     sliderConfigs.forEach(([id, valueId, stateKey]) => {
@@ -377,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chartFunctions.stop();
         }],
         ['sendManualButton', api.sendManual],
+        ['resetPositionButton', api.resetPosition],
     ];
 
     buttonConfigs.forEach(([id, handler]) => {
@@ -387,4 +404,35 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(`Button with id ${id} not found`);
         }
     });
+
+    // SSE Integration
+    const eventSource = new EventSource('/stream');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+
+    // Listen for "status" events from the backend
+    eventSource.addEventListener('status', (event) => {
+        const status = event.data; // "connected" or "disconnected"
+
+        // Update the dot color
+        statusDot.classList.remove('connected', 'disconnected');
+        statusDot.classList.add(status);
+
+        // Update the status text
+        statusText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+    });
+
+    // Update the SSE error event listener to use the correct event type
+    eventSource.addEventListener('error', (event) => {
+        const errorMessage = event.data;
+        alert(`Error: ${errorMessage}`);
+    });
+
+    // Keep the connection error handler for SSE issues
+    eventSource.onerror = (error) => {
+        console.error('SSE Connection Error:', error);
+        statusDot.classList.add('disconnected');
+        statusText.textContent = 'Disconnected (SSE Error)';
+        eventSource.close();
+    };
 });

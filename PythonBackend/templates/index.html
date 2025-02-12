@@ -10,9 +10,10 @@
 </head>
 <header>
     <h1>Quake Table Control System</h1>
-    <p id="statusLabel">
-        <span id="statusDot"></span> Disconnected
-    </p>
+    <div class="status-indicator">
+        <span id="statusDot" class="disconnected"></span>
+        <span id="statusText">Disconnected</span>
+    </div>
 </header>
 <body>
     <div class="container">
@@ -24,9 +25,9 @@
                     <input type="range"
                         id="freqRange"
                         min="0"
-                        max="100"
+                        max="27"
                         value="0"
-                        step="1"
+                        step="0.5"
                         class="slider">
                     <span id="freqVal">0</span> Hz<br>
                 </label>
@@ -36,7 +37,7 @@
                     <input type="range"
                         id="dispRange"
                         min="0"
-                        max="40"
+                        max="60"
                         value="0"
                         step="0.5"
                         class="slider">
@@ -52,7 +53,7 @@
                     <input type="range"
                         id="waveGenDispRange"
                         min="0"
-                        max="40"
+                        max="60"
                         value="0"
                         step="0.5"
                         class="slider">
@@ -63,7 +64,7 @@
                     <input type="range"
                         id="GsRange"
                         min="0"
-                        max="40"
+                        max="12"
                         value="0"
                         step="0.5"
                         class="slider">
@@ -94,17 +95,24 @@
                     <span id="SimDurationVal">0</span> s<br>
                 </label>
 
-                <input type="checkbox" id="dampedCheckbox">
-                <label for="dampedCheckbox">Damped</label> <br>
-
-                <label for="percentDamped">Percent Damped</label>
-                <input type="text" id="percentDamped" disabled> <br>
-
+                <h3>Percent Damped</h3>
+                <label>
+                    <input type="range"
+                        id="dampedRange"
+                        min="0"
+                        max="95"
+                        value="0"
+                        step="5"
+                        class="slider">
+                    <span id="percentDampedVal">0</span> %<br>
+                </label>
                 <button id="sendDataButton">Begin Simulation</button>
             </div>
         </div>
-
-        <button id="stopSimulationButton">Stop Simulation</button>
+        <div class="button-container">
+            <button id="stopSimulationButton">Stop Simulation</button>
+            <button id="resetPositionButton">Reset Position</button>
+        </div>
         <p id="response"></p>
 
         <div class="graph-container">
