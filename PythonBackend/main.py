@@ -1,28 +1,47 @@
 # main.py
 import time
-from typing import Optional
+import logging
 from pico_link import PicoLink
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 class PicoConnectionManager:
-    def __init__(self, port="/dev/cu.usbmodem21201", baud_rate=115200, ack="OK"):
+    def __init__(self, port="/dev/cu.usbmodem21201", baud_rate=115200, ack="OK", queue=None):
         self.port = port
         self.baud_rate = baud_rate
         self.ack = ack
-        self.conn: Optional[PicoLink] = None
+        self.conn = None
+        self.message_queue = queue
+        self.last_status = None
+
+    def update_status(self, status, error_msg=None):
+        """Update status and send through message queue if changed"""
+        if status != self.last_status:
+            self.last_status = status
+            if self.message_queue:
+                self.message_queue.put(('status', status))
+                if error_msg:
+                    self.message_queue.put(('error', error_msg))
+                logging.info(f"Status updated to: {status}")
 
     def open_connection(self):
         """Opens the connection to the microcontroller."""
         try:
-            self.conn = PicoLink(self.port, self.baud_rate, self.ack)
+            self.conn = PicoLink(self.port, self.baud_rate, self.ack, self.message_queue)
             self.conn.open()
+
             if self.conn.is_connected():
+                self.update_status('connected')
                 return "Connection established."
             else:
+                self.update_status('disconnected', "Failed to establish connection")
                 self.conn = None
                 return "Failed to establish connection."
         except Exception as e:
+            error_msg = f"Failed to open connection: {e}"
+            self.update_status('disconnected', error_msg)
             self.conn = None
-            return f"Failed to open connection: {e}"
+            return error_msg
 
     def close_connection(self):
         """Closes the connection to the microcontroller."""

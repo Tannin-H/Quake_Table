@@ -1,32 +1,50 @@
 # app.py
 import os
-import queue
-import time
-
-import numpy as np
+from queue import Queue, Empty
+import logging
 from flask_cors import CORS
 from flask import Flask, jsonify, render_template, request, Response
 from main import PicoConnectionManager
 
 app = Flask(__name__)
-pico_manager = PicoConnectionManager()
-message_queue = queue.Queue()
-CORS(app)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+message_queue = Queue()
+pico_manager = PicoConnectionManager(queue=message_queue)
+CORS(
+    app,
+    resources={r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }},
+    supports_credentials=True
+)
 
 def trigger_alert(message):
     """Add an error message to the SSE queue."""
     message_queue.put(('error', message))
 
+def trigger_limit_alert():
+    """Add a limit triggered alert to the SSE queue."""
+    message_queue.put(('limit_triggered', 'Limit switch triggered'))
+
+
 def setup_connection():
     """Open the connection to the microcontroller."""
     try:
-        print(pico_manager.open_connection())
-        # Send "connected" status
-        message_queue.put(('status', 'connected'))
+        result = pico_manager.open_connection()
+        logging.info(f"Connection result: {result}")
+
+        if "established" in result.lower():
+            message_queue.put(('status', 'connected'))
+            logging.info("Status updated to: connected")
+        else:
+            message_queue.put(('status', 'disconnected'))
+            message_queue.put(('error', result))
+            logging.warning(f"Connection failed: {result}")
     except Exception as e:
         error_msg = f"Failed to open connection: {str(e)}"
-        print(error_msg)
-        # Send "disconnected" status
+        logging.error(error_msg)
         message_queue.put(('status', 'disconnected'))
         message_queue.put(('error', error_msg))
 
@@ -40,10 +58,17 @@ def stream():
     def event_stream():
         while True:
             try:
-                message_type, message = message_queue.get(timeout=1)
-                yield f"event: {message_type}\ndata: {message}\n\n"
-            except queue.Empty:
-                pass
+                # Now use Empty instead of Queue.Empty
+                message = message_queue.get(timeout=0.5)
+                if message:
+                    message_type, message_data = message
+                    yield f"event: {message_type}\ndata: {message_data}\n\n"
+            except Empty:  # Use Empty instead of Queue.Empty
+                # Send heartbeat to keep connection alive
+                if pico_manager.conn and pico_manager.conn.is_connected():
+                    yield "event: heartbeat\ndata: connected\n\n"
+                else:
+                    yield "event: heartbeat\ndata: disconnected\n\n"
 
     return Response(
         event_stream(),

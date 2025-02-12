@@ -19,13 +19,14 @@ def showPorts():
             logging.info(f"{index}\t{value.name}\t{value.manufacturer}")
 
 class PicoLink:
-    def __init__(self, controllerPort="/dev/cu.usbmodem21201", baudRate=115200, ack="OK"):
+    def __init__(self, controllerPort="/dev/cu.usbmodem21201", baudRate=115200, ack="OK", message_queue=None):
         self.serial = None
         self.connected = False
         self.picoPort = controllerPort
         self.baudRate = baudRate
         self.ack = ack
         self.controllerQueue = queue.Queue()
+        self.message_queue = message_queue
         self.configureController()
 
     def open(self, timeout=2):
@@ -52,24 +53,46 @@ class PicoLink:
         """Returns the connection status."""
         return self.connected
 
+    def update_connection_status(self, is_connected, error_msg=None):
+        """Update connection status and notify through message queue"""
+        self.connected = is_connected
+        if self.message_queue:
+            status = 'connected' if is_connected else 'disconnected'
+            self.message_queue.put(('status', status))
+            if error_msg:
+                self.message_queue.put(('error', error_msg))
+            logging.info(f"Connection status updated to: {status}")
+
     def listenToController(self):
-        """Continuously reads data from the microcontroller in a separate thread."""
         message = b''
         while True:
             try:
-                # Read one byte at a time from the serial port
+                if not self.serial or not self.serial.is_open:
+                    self.update_connection_status(False, "Serial connection lost")
+                    break
+
                 incoming = self.serial.read()
-                if incoming == b'\n':  # Indicates end of a message
+                if not incoming:  # Timeout occurred
+                    continue
+
+                if incoming == b'\n':
                     decoded_message = message.decode('utf-8').strip().upper()
-                    logging.info(f"Received from Pico: {decoded_message}")
+                    logging.info(f"Decoded message: '{decoded_message}'")  # Added debug log
+
+                    if decoded_message == "LIMIT TRIGGERED":
+                        logging.info("Limit trigger detected, sending to queue")  # Added debug log
+                        if self.message_queue:
+                            self.message_queue.put(('limit_triggered', 'Limit switch triggered'))
+                            logging.info("Limit message sent to queue")  # Added debug log
                     self.controllerQueue.put(decoded_message)
-                    message = b''  # Reset message after handling
-                elif incoming not in [b'', b'\r']:  # Append valid data to the message
+                    message = b''
+                elif incoming not in [b'', b'\r']:
                     message += incoming
+
             except serial.SerialException as e:
-                logging.error(f"Serial connection issue: {e}")
-                self.connected = False
-                # Attempt to reconnect the serial connection
+                error_msg = f"Serial connection issue: {e}"
+                logging.error(error_msg)
+                self.update_connection_status(False, error_msg)
                 self.reconnect()
                 break
 

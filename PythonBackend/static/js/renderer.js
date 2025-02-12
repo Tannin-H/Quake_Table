@@ -406,33 +406,119 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // SSE Integration
-    const eventSource = new EventSource('/stream');
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
+    let lastHeartbeat = Date.now();
+    let currentStatus = 'disconnected';
 
-    // Listen for "status" events from the backend
-    eventSource.addEventListener('status', (event) => {
-        const status = event.data; // "connected" or "disconnected"
+    function updateStatus(status, message = null) {
+        if (currentStatus === status) return; // Avoid unnecessary updates
 
-        // Update the dot color
+        currentStatus = status;
         statusDot.classList.remove('connected', 'disconnected');
         statusDot.classList.add(status);
 
-        // Update the status text
-        statusText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        // Update status text with message if provided
+        statusText.textContent = message || status.charAt(0).toUpperCase() + status.slice(1);
+
+        // Log status change
+        console.log(`Status updated to: ${status}${message ? ` (${message})` : ''}`);
+    }
+
+    // Initialize EventSource for server-sent events
+    const eventSource = new EventSource('/stream');
+
+    // Status event handler
+    eventSource.addEventListener('status', (event) => {
+        const status = event.data;
+        updateStatus(status);
+        lastHeartbeat = Date.now();
     });
 
-    // Update the SSE error event listener to use the correct event type
+    // Heartbeat handler
+    eventSource.addEventListener('heartbeat', (event) => {
+        lastHeartbeat = Date.now();
+        const status = event.data;
+        updateStatus(status);
+    });
+
+    // Error handler
     eventSource.addEventListener('error', (event) => {
-        const errorMessage = event.data;
-        alert(`Error: ${errorMessage}`);
+        console.error('SSE Error:', event);
+        const errorData = event.data;
+
+        if (errorData) {
+            // Create error notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50';
+            notification.textContent = errorData;
+            document.body.appendChild(notification);
+
+            // Remove notification after 5 seconds
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        updateStatus('disconnected', 'Connection lost');
     });
 
-    // Keep the connection error handler for SSE issues
-    eventSource.onerror = (error) => {
-        console.error('SSE Connection Error:', error);
-        statusDot.classList.add('disconnected');
-        statusText.textContent = 'Disconnected (SSE Error)';
-        eventSource.close();
-    };
+    // Connection monitoring
+    setInterval(() => {
+        const timeSinceLastHeartbeat = Date.now() - lastHeartbeat;
+        if (timeSinceLastHeartbeat > 3000) { // 3 seconds threshold
+            updateStatus('disconnected', 'No response from server');
+        }
+    }, 1000);
+
+    eventSource.addEventListener('limit_triggered', (event) => {
+        console.log('Limit triggered event received:', event);
+        const message = event.data;
+        console.log('Limit message:', message);
+        // Create alert dialog with more explicit styling
+        const alertDialog = document.createElement('div');
+        alertDialog.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        `;
+
+        // Create dialog content with explicit styling
+        alertDialog.innerHTML = `
+            <div style="
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                max-width: 400px;
+                width: 90%;
+            ">
+                <h3 style="
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin-bottom: 16px;
+                ">Limit Switch Alert</h3>
+                <p style="margin-bottom: 16px;">Limit Switch Triggered Resetting Table Position</p>
+                <button style="
+                    background: #3b82f6;
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    border: none;
+                    cursor: pointer;
+                " onclick="this.parentElement.parentElement.remove()">
+                    Close
+                </button>
+            </div>
+        `;
+
+        // Ensure the dialog is added to the document body
+        document.body.appendChild(alertDialog);
+        console.log('Alert dialog added to DOM');
+    });
 });
