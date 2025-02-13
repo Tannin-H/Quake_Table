@@ -1,12 +1,14 @@
 # main.py
 import time
-import logging
 from pico_link import PicoLink
+from logger import Logger
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Initialize the logger
+logger = Logger()
+log = logger.get_logger()
 
 class PicoConnectionManager:
-    def __init__(self, port="/dev/cu.usbmodem21201", baud_rate=115200, ack="OK", queue=None):
+    def __init__(self, port="/dev/ttyACM0", baud_rate=115200, ack="OK", queue=None):
         self.port = port
         self.baud_rate = baud_rate
         self.ack = ack
@@ -22,7 +24,7 @@ class PicoConnectionManager:
                 self.message_queue.put(('status', status))
                 if error_msg:
                     self.message_queue.put(('error', error_msg))
-                logging.info(f"Status updated to: {status}")
+            log.info(f"Status updated to: {status}")
 
     def open_connection(self):
         """Opens the connection to the microcontroller."""
@@ -91,7 +93,7 @@ class PicoConnectionManager:
             error_msg = "Connection not established. Ensure table is connected."
             return {"status": "error", "message": error_msg}
         try:
-            response = self.conn.send("STOP\n")  # Capture response here
+            response = self.conn.send("STOP\n")
             return {"status": "success", "message": f"Stop command sent. Response: {response}"}
         except Exception as e:
             return {"status": "error", "message": f"Failed to stop table: {e}"}
@@ -102,7 +104,7 @@ class PicoConnectionManager:
             error_msg = "Connection not established. Ensure table is connected."
             return {"status": "error", "message": error_msg}
         try:
-            response = self.conn.send("RESET\n")  # Capture response here
+            response = self.conn.send("RESET\n")
             return {"status": "success", "message": f"Reset Command command sent. Response: {response}"}
         except Exception as e:
             return {"status": "error", "message": f"Failed to stop table: {e}"}

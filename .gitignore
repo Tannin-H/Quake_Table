@@ -2,3 +2,4 @@ ElectronApp/node_modules*
 .venv*
 /.idea*
 package-lock.json
+app.log
