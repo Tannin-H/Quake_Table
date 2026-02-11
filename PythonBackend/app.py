@@ -1,24 +1,33 @@
-# app.py
 import os
 from queue import Queue, Empty
 from flask_cors import CORS
 from flask import Flask, jsonify, render_template, request, Response
-from main import PicoConnectionManager
-from logger import Logger  # Import the Logger class
+from shake_table_controller import ShakeTableController
+from logger import Logger
+from config import Config
 
 # Initialize the logger
 logger = Logger()
-log = logger.get_logger()
+log = logger.get_logger(__name__)
 
+# Initialize Flask app
 app = Flask(__name__)
+app.config.from_object(Config)
+
+# Update logger level from config
+log.setLevel(app.config['LOG_LEVEL'])
+
+# Initialize components
 message_queue = Queue()
-pico_manager = PicoConnectionManager(queue=message_queue)
+pico_manager = ShakeTableController(queue=message_queue)
+
+# Setup CORS
 CORS(
     app,
     resources={r"/*": {
-        "origins": "*",
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
+        "origins": app.config['CORS_ORIGINS'],
+        "methods": app.config['CORS_METHODS'],
+        "allow_headers": app.config['CORS_HEADERS']
     }},
     supports_credentials=True
 )
@@ -48,7 +57,7 @@ def setup_connection():
             log.warning(f"Connection failed: {result}")
     except Exception as e:
         error_msg = f"Failed to open connection: {str(e)}"
-        log.error(error_msg)  # Log the error
+        log.error(error_msg)
         message_queue.put(('status', 'disconnected'))
         message_queue.put(('error', error_msg))
 
@@ -61,7 +70,7 @@ def stream():
     def event_stream():
         while True:
             try:
-                message = message_queue.get(timeout=0.5)
+                message = message_queue.get(timeout=app.config['SSE_HEARTBEAT_TIMEOUT'])
                 if message:
                     message_type, message_data = message
                     yield f"event: {message_type}\ndata: {message_data}\n\n"
@@ -109,10 +118,13 @@ def start_manual():
         displacement = data.get('displacement', 0)
         response = pico_manager.run_manual_routine(speed, displacement)
         log.info(f"Manual routine response: {response}")
+
         if response["status"] == "error":
             trigger_alert(response["message"])
+            log.warning(f"Manual routine failed: {response}")
             return jsonify(response), 400
         return jsonify(response), 200
+
     except Exception as e:
         error_msg = f"Error running manual routine: {str(e)}"
         log.error(error_msg)
@@ -152,6 +164,12 @@ def reset_position():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
+    # Uncomment the following two lines if you want to run the app without connecting to the pico
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         setup_connection()
-    app.run(debug=True)
+
+    app.run(
+        debug=app.config['DEBUG'],
+        host=app.config['FLASK_HOST'],
+        port=app.config['FLASK_PORT']
+    )

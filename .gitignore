@@ -3,3 +3,5 @@ ElectronApp/node_modules*
 /.idea*
 package-lock.json
 app.log
+out/
+./node_modules

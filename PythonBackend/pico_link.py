@@ -5,34 +5,35 @@ import serial
 import time
 import serial.tools.list_ports
 from logger import Logger
+from config import Config
 
 # Initialize the logger
 logger = Logger()
-log = logger.get_logger()
+log = logger.get_logger(__name__)
 
 class PicoLink:
-    def __init__(self, controllerPort="/dev/ttyACM0", baudRate=115200, ack="OK", message_queue=None):
+    def __init__(self, message_queue=None):
         self.serial = None
         self.connected = False
-        self.picoPort = controllerPort
-        self.baudRate = baudRate
-        self.ack = ack
+        self.picoPort = Config.COM_PORT
+        self.baudRate = Config.BAUD_RATE
+        self.ack = Config.ACK
         self.controllerQueue = queue.Queue()
         self.message_queue = message_queue
         self.configureController()
 
-    def open(self, timeout=60):
+    def open(self):
         """Opens the connection to the microcontroller."""
         start = time.time()
         log.info(f"Waiting for '{self.ack}' from Pico on port {self.picoPort} ...")
-        while time.time() - start <= timeout:
+        while time.time() - start <= Config.CONNECTION_TIMEOUT:
             if not self.controllerQueue.empty():
                 if self.controllerQueue.get() == self.ack:
                     log.info("Connection established")
                     self.send("CONF")
                     self.connected = True
                     return
-        log.error(f"*** Unable to establish connection within {timeout} seconds")
+        log.error(f"*** Unable to establish connection within {Config.CONNECTION_TIMEOUT} seconds")
 
     def close(self):
         """Closes the serial connection."""
@@ -98,10 +99,10 @@ class PicoLink:
         except serial.SerialException as e:
             log.error(f"Could not open serial port {self.picoPort}: {e}")
 
-    def reconnect(self, max_retries=5):
+    def reconnect(self):
         """Handles reconnection logic if the microcontroller disconnects."""
         retries = 0
-        while retries < max_retries:
+        while retries < Config.MAX_RECONNECT_ATTEMPTS:
             try:
                 log.info("Attempting to reconnect to the microcontroller...")
                 self.serial = serial.Serial(self.picoPort, self.baudRate, timeout=1)
@@ -116,7 +117,7 @@ class PicoLink:
                 log.error(f"Reconnection failed: {e}")
                 retries += 1
                 time.sleep(5)  # Wait before retrying
-        log.error(f"*** Reconnection failed after {max_retries} attempts.")
+        log.error(f"*** Reconnection failed after {Config.MAX_RECONNECT_ATTEMPTS} attempts.")
 
     def send(self, msg, timeout=5):
         """Sends a message to the microcontroller and waits for a response."""
